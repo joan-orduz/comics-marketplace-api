@@ -1,10 +1,58 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { ComicsModule } from './comics/comics.module';
+import { ConfigModule } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigService } from '@nestjs/config';
+import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
+import { APP_GUARD } from '@nestjs/core';
+import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+import { RolesGuard } from './auth/guards/roles.guard';
 
 @Module({
-  imports: [],
+  imports: [
+    // ConfigModule: enviroment variables, configured ONLY ONE TIME
+    ConfigModule.forRoot({ isGlobal: true }),
+    // TypeOrmModule: connection with the database, configured ONLY ONE TIME
+    TypeOrmModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        type: 'postgres',
+        host: config.get('DB_HOST'),
+        port: config.get('DB_PORT'),
+        username: config.get('DB_USERNAME'),
+        password: config.get('DB_PASSWORD'),
+        database: config.get('DB_NAME'),
+        entities: [__dirname + '/**/*.entity{.ts,.js}'],
+        synchronize: config.get('DB_SYNCHRONIZE') === 'true',
+        ssl: false,
+      }),
+    }),
+
+    // Business modules
+    ComicsModule,
+    UsersModule,
+    AuthModule,
+    // TO DO: OrdersModule,
+    // TO DO: PaymentsModule,
+    // TO DO: AuthModule,
+  ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    // JwtAuthGuard global: every request requires a valid JWT,
+    // except the ones with @Public()
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+    // RolesGuard global: verifies roles when @Roles() is used
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
+    },
+    AppService,
+  ],
 })
 export class AppModule {}
