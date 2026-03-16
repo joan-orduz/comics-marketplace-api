@@ -1,0 +1,82 @@
+[
+  {
+    "title": "X-Men: Days of Future Past",
+    "description": "Return to the future in a tale that reveals the events leading up to the timeless classic! In a world where mutants are more than simply hated and feared but not yet slain and apprehended, Senator Kelly's assassination comes to pass — bringing with it the Mutant Control Act and Sentinels on every corner. But with mutantkind on their back foot, what lengths will Kate Pryde, Wolverine, Colossus, Storm, Banshee, Angel, Cyclops, Professor X and the rest of the X-Men go to in order to find some way to survive? And what scheme of Magneto's will bring about their ultimate doomsday? Witness the thirty-year descent into dystopia as one of the most celebrated X-Men timelines is explored in-depth for the first time!",
+    "price": 60000,
+    "stock": 10,
+    "coverImageUrl": null,
+    "genre": "Superheroes"
+  },
+  {
+    "title": "The Amazing Spider-Man: Maximum Carnage",
+    "description": "The symbiotic villain Carnage emerges as one of Spider-Man's most dangerous foes yet. With the creation of his own symbiotic son Toxin, the web-slinger must face his greatest challenge. An epic tale of chaos and destruction that spans multiple comics and teams.",
+    "price": 45000,
+    "stock": 15,
+    "coverImageUrl": null,
+    "genre": "Superheroes"
+  },
+  {
+    "title": "Watchmen",
+    "description": "A brilliant and fearless deconstruction of the superhero genre, Watchmen follows a group of masked heroes investigating the murder of one of their own in an alternate history America. With Cold War tensions at their peak, these flawed and complex characters must uncover a conspiracy that threatens the world.",
+    "price": 85000,
+    "stock": 8,
+    "coverImageUrl": null,
+    "genre": "Superheroes"
+  },
+  {
+    "title": "The Dark Knight Returns",
+    "description": "An aging Batman returns to Gotham City after ten years in retirement. Facing a violent criminal underworld, the Dark Knight must confront his mortality while confronting a new generation of villains. A landmark series that redefined the superhero genre.",
+    "price": 75000,
+    "stock": 12,
+    "coverImageUrl": null,
+    "genre": "Superheroes"
+  },
+  {
+    "title": "Dune: House Atreides",
+    "description": "The epic prequel to Frank Herbert's masterpiece. Explore the origins of the Atreides family and their ascension to power on Arrakis. Politics, intrigue, and the mystical power of spice collide in this stunning sci-fi adaptation.",
+    "price": 55000,
+    "stock": 20,
+    "coverImageUrl": null,
+    "genre": "Science Fiction"
+  },
+  {
+    "title": "Saga",
+    "description": "An intimate, dangerous, and touching science fantasy epic about the literally star-crossed offspring of a soldier and intergalactic refugee. From their secret hideaway, a young family and their ragtag group of allies run from the armies pursuing them.",
+    "price": 48000,
+    "stock": 7,
+    "coverImageUrl": null,
+    "genre": "Science Fiction"
+  },
+  {
+    "title": "Maus: A Survivor's Tale",
+    "description": "A groundbreaking achievement in comics, Pulitzer Prize-winner Maus is a haunting tale of mice and men. A story within a story, it explores the author's relationship with his father as he recounts his experiences surviving the Holocaust.",
+    "price": 70000,
+    "stock": 9,
+    "coverImageUrl": null,
+    "genre": "Historical Fiction"
+  },
+  {
+    "title": "Akira",
+    "description": "In the sprawling city of Neo-Tokyo, a powerful psychic force resurrects after decades of slumber. A biker gang stumbles onto a secret military project that will change the fate of the nation. Groundbreaking anime-inspired comics that defined a generation.",
+    "price": 92000,
+    "stock": 5,
+    "coverImageUrl": null,
+    "genre": "Science Fiction"
+  },
+  {
+    "title": "V for Vendetta",
+    "description": "A frightening and powerful story of the loss of freedom and identity in a chillingly believable totalitarian world, V for Vendetta stands as one of the highest achievements of the comics medium and a defining work for creators Alan Moore and David Lloyd.",
+    "price": 50000,
+    "stock": 18,
+    "coverImageUrl": null,
+    "genre": "Superheroes"
+  },
+  {
+    "title": "Hellboy: Seed of Destruction",
+    "description": "The beginning of an extraordinary adventure! In 1944, an American soldier discovers a mysterious portal in a castle in Scotland. What emerges will change the world forever. Meet Hellboy, a supernatural detective in the employ of the B.P.R.D.",
+    "price": 42000,
+    "stock": 11,
+    "coverImageUrl": null,
+    "genre": "Horror"
+  }
+]

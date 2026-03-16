@@ -3,6 +3,8 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
+  Inject,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, ILike, FindOptionsWhere, Filter } from 'typeorm';
@@ -10,17 +12,24 @@ import { CreateComicDto } from './dto/create-comic.dto';
 import { UpdateComicDto } from './dto/update-comic.dto';
 import { FilterComicsDto } from './dto/filter-comics.dto';
 import { Comic } from './entities/comic.entity';
-import { User } from '../users/entities/user.entity';
-import { PaginatedResult } from '../common/pagination/paginated-result.interface';
+import type { User } from '../users/entities/user.entity';
+import type { PaginatedResult } from '../common/pagination/paginated-result.interface';
 import { Role } from '../auth/decorators/roles.decorator';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 
-// Injectable tells NestJS that this class can be injected as a dependency
+// injectable tells NestJS that this class can be injected as a dependency
 @Injectable()
 export class ComicsService {
+  private readonly logger = new Logger(ComicsService.name);
+  private readonly CACHE_KEY_PREFIX = 'comics:list';
+  private readonly CACHE_TTL = 300; // 5 minutes in seconds
+
   constructor(
     // InjectRepository is used to inject the TypeORM repository for the Comic entity
     @InjectRepository(Comic)
     private comicsRepository: Repository<Comic>,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   async create(dto: CreateComicDto, seller: User): Promise<Comic> {
@@ -38,11 +47,29 @@ export class ComicsService {
       seller,
       sellerId: seller.id,
     });
-    return this.comicsRepository.save(comic);
+    const result = await this.comicsRepository.save(comic);
+
+    // invalidate all comics list cache when a new comic is created
+    await this.invalidateComicsCache();
+    this.logger.log('comic created. cache invalidated.');
+
+    return result;
   }
 
   async findAll(query: FilterComicsDto): Promise<PaginatedResult<Comic>> {
     const { page = 1, limit = 20, genre, search } = query;
+
+    // generate unique cache key based on query parameters
+    const cacheKey = `${this.CACHE_KEY_PREFIX}:page=${page}:limit=${limit}:genre=${genre || 'all'}:search=${search || 'all'}`;
+
+    // try to get from cache
+    const cached = await this.cacheManager.get<PaginatedResult<Comic>>(cacheKey);
+    if (cached) {
+      this.logger.debug(`cache hit for key: ${cacheKey}`);
+      return cached;
+    }
+
+    this.logger.debug(`cache miss for key: ${cacheKey}. querying database...`);
 
     // build the where condition based on the filters
     const where: FindOptionsWhere<Comic> = { active: true };
@@ -55,7 +82,14 @@ export class ComicsService {
       take: limit, // maximum number of items to return
       relations: ['seller'], // include seller information in the response
     });
-    return { items, total, page, limit, pages: Math.ceil(total / limit) };
+
+    const result = { items, total, page, limit, pages: Math.ceil(total / limit) };
+
+    // store in cache with TTL (must convert seconds to milliseconds)
+    await this.cacheManager.set(cacheKey, result, this.CACHE_TTL * 1000);
+    this.logger.debug(`cached result for key: ${cacheKey}`);
+
+    return result;
   }
 
   async findOne(id: string): Promise<Comic> {
@@ -79,14 +113,19 @@ export class ComicsService {
     }
 
     Object.assign(comic, updateComicDto); // update the comic entity with the new values
+    const result = await this.comicsRepository.save(comic); // save the updated comic to the database
 
-    return this.comicsRepository.save(comic); // save the updated comic to the databaseq
+    // invalidate all comics list cache when a comic is updated
+    await this.invalidateComicsCache();
+    this.logger.log(`comic ${id} updated. cache invalidated.`);
+
+    return result;
   }
 
   async remove(id: string, user: User): Promise<void> {
     const comic = await this.findOne(id);
 
-    // Only the owner (seller) or admin can delete
+    // only the owner (seller) or admin can delete
     const isOwner = comic.sellerId === user.id;
     const isAdmin = user.role === Role.ADMIN;
     
@@ -95,5 +134,30 @@ export class ComicsService {
     }
 
     await this.comicsRepository.update(id, { active: false }); // soft delete by setting active to false
+
+    // invalidate all comics list cache when a comic is removed
+    await this.invalidateComicsCache();
+    this.logger.log(`comic ${id} removed. cache invalidated.`);
+  }
+
+  /**
+   * invalidate all comics list cache entries using wildcard pattern
+   * called whenever data changes (create, update, delete)
+   * uses redis wildcard to match all keys starting with CACHE_KEY_PREFIX
+   */
+  private async invalidateComicsCache(): Promise<void> {
+    try {
+      // get all cache keys matching the pattern 'comics:list:*'
+      // wildcard pattern is more efficient than fetching all keys
+      const redisStore = this.cacheManager.stores as any;
+      const keys = await redisStore.keys(`${this.CACHE_KEY_PREFIX}:*`);
+      
+      if (keys && keys.length > 0) {
+        await Promise.all(keys.map((key: string) => this.cacheManager.del(key)));
+        this.logger.debug(`invalidated ${keys.length} cache keys matching pattern '${this.CACHE_KEY_PREFIX}:*'`);
+      }
+    } catch (error) {
+      this.logger.error(`failed to invalidate cache: ${error.message}`);
+    }
   }
 }
