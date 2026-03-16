@@ -11,6 +11,7 @@ import { User } from 'src/users/entities/user.entity';
 import { HttpStatus } from '@nestjs/common';
 import { HttpCode } from '@nestjs/common';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -27,6 +28,7 @@ export class AuthController {
 
   @Public()
   @Post('login')
+  @Throttle({default: {limit: 5, ttl: 300000}}) // Limita a 5 intentos por 5 minutos para prevenir ataques de fuerza bruta 
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Login with email and password' })
   login(@Body() dto: LoginDto) {
