@@ -10,6 +10,7 @@ import {
   HttpCode,
   HttpStatus,
   ParseUUIDPipe,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ComicsService } from './comics.service';
@@ -20,6 +21,7 @@ import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 import { Roles, Role } from '../auth/decorators/roles.decorator';
 import { User } from '../users/entities/user.entity';
+import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 
 
 // Base path: /comics
@@ -43,6 +45,8 @@ export class ComicsController {
   // GET /comics - Get all comics with pagination and filtering
   @Public()
   @Get()
+  @UseInterceptors(CacheInterceptor) // cache the response of this endpoint
+  @CacheTTL(300) // cache duration in seconds (5 minutes)
   @ApiOperation({ summary: 'Get all comics with pagination and filtering' })
   findAll(@Query() query: FilterComicsDto) {
     return this.comicsService.findAll(query);
@@ -51,6 +55,8 @@ export class ComicsController {
   // GET /comics/:id - Get a single comic by ID
   @Public()
   @Get(':id')
+  @UseInterceptors(CacheInterceptor) // cache the response of this endpoint
+  @CacheTTL(300) // cache duration in seconds (5 minutes)
   @ApiOperation({ summary: 'Get a single comic by ID' })
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.comicsService.findOne(id);

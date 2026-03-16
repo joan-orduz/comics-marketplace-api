@@ -1,68 +1,72 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
+import compression from 'compression';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { ResponseTransformInterceptor } from './common/interceptors/response-transform.interceptor';
 import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  // ValidationPipe applies validation rules defined in DTOs globally to all incoming requests
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,       // delete properties that do not have any decorators in the DTO
-    forbidNonWhitelisted: true, // throw an error if non-whitelisted properties are present in the request
-    transform: true,       // convert payloads to be objects typed according to their DTO classes
-    transformOptions: {
-      enableImplicitConversion: true,
-    },
-  }), );
+  const app = await NestFactory.create(AppModule, {
+    // en production, disable NestJS logs and use your own
+    bufferLogs: true,
+  });
 
-  // Prefijo global para todas las rutas
-  app.setGlobalPrefix('api/v1');
+  // ── Security ────────────────────────────────────
+  app.use(helmet());
+  app.enableCors({
+    origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  });
 
-  // Global Interceptors - order matters: execute from first to last
+  // ── Performance ──────────────────────────────
+  app.use(compression()); // gzip in responses
+
+  // ── API Prefix and Versioning ───────────────────────
+  app.setGlobalPrefix('api');
+  app.enableVersioning({ type: VersioningType.URI }); // /api/v1/...
+
+  // ── Swagger (only in non-production) ───────────────
+  // must be after global prefix to show correct routes
+  if (process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('Comics Marketplace API')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
+    SwaggerModule.setup('docs', app, SwaggerModule.createDocument(app, config));
+  }
+
+  // ── Global Validation ──────────────────────────────
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true, // delete properties that do not have any decorators in the dto
+      forbidNonWhitelisted: true, // throw an error if non-whitelisted properties are present in the request
+      transform: true, // convert payloads to be objects typed according to their dto classes
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
+    }),
+  );
+
+  // ── Exception Filters ─────────────────────────────
+  app.useGlobalFilters(new AllExceptionsFilter());
+
+  // ── Global Interceptors ─────────────────────────
+  // order matters: execute from first to last
   app.useGlobalInterceptors(
     new TimeoutInterceptor(),
     new LoggingInterceptor(),
     new ResponseTransformInterceptor(),
   );
 
-  app.useGlobalFilters(new AllExceptionsFilter());
+  // ── Graceful Shutdown ─────────────────────────────
+  app.enableShutdownHooks();
 
-  // Swagger configuration
-  const config = new DocumentBuilder()
-    .setTitle('Comics Marketplace API')
-    .setDescription('API para marketplace de cómics')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
-
-  await app.listen(3000);
-
-  // helmet is a collection of middleware functions that set various HTTP headers to help protect the app from well-known web vulnerabilities.
-  // includes: X-Content-Type-Options, X-Frame-Options,
-  //          Content-Security-Policy, HSTS, etc.
-
-  app.use(helmet());
-  
-  app.enableCors({
-    origin: [
-      (process.env.NODE_ENV || 'http://localhost:3000') // allow all origins in development, but restrict in production
-    ],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  })
-
-  app.useGlobalInterceptors(
-    new LoggingInterceptor(),
-    new ResponseTransformInterceptor(),
-    new TimeoutInterceptor(),
-  )
-
+  await app.listen(process.env.PORT || 3000);
 }
 bootstrap();
