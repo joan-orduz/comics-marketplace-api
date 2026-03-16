@@ -10,6 +10,7 @@ import { AuthModule } from './auth/auth.module';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
@@ -30,14 +31,18 @@ import { RolesGuard } from './auth/guards/roles.guard';
         ssl: false,
       }),
     }),
-
+    // ThrottlerModule: rate limiting, configured ONLY ONE TIME
+    ThrottlerModule.forRoot([{
+      name: 'short',
+      ttl: 60000, // Time to live (seconds)
+      limit: 10, // Max requests per ttl
+    }]),
     // Business modules
     ComicsModule,
     UsersModule,
     AuthModule,
     // TO DO: OrdersModule,
     // TO DO: PaymentsModule,
-    // TO DO: AuthModule,
   ],
   controllers: [AppController],
   providers: [
