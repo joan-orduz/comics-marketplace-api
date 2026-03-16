@@ -18,7 +18,7 @@ async function bootstrap() {
     transformOptions: {
       enableImplicitConversion: true,
     },
-  }));
+  }), );
 
   // Prefijo global para todas las rutas
   app.setGlobalPrefix('api/v1');
