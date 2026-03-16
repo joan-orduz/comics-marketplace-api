@@ -1,5 +1,6 @@
 import { IsOptional, IsInt, Min, Max, IsString, IsIn } from 'class-validator';
 import { Type } from 'class-transformer';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class FilterComicsDto {
   @IsOptional()
@@ -17,9 +18,14 @@ export class FilterComicsDto {
 
   @IsOptional()
   @IsString()
+  @ApiPropertyOptional({ description: 'Search term for comic titles' })
   search?: string;  // search term for title
   
   @IsOptional()
-  @IsIn(['Superhéroes', 'Manga', 'Fantasía', 'Terror', 'Comedia'])
+  @IsIn(['Superheroes', 'Manga', 'Fantasy', 'Horror', 'Comedy'])
+  @ApiPropertyOptional({
+    enum: ['Superheroes', 'Manga', 'Fantasy', 'Horror', 'Comedy'],
+    description: 'Filter comics by genre',
+  })
   genre?: string;
 }

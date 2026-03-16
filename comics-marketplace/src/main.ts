@@ -36,6 +36,14 @@ async function bootstrap() {
   //          Content-Security-Policy, HSTS, etc.
 
   app.use(helmet());
+  
+  app.enableCors({
+    origin: [
+      (process.env.NODE_ENV || 'http://localhost:3000') // allow all origins in development, but restrict in production
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  })
 
 }
 bootstrap();

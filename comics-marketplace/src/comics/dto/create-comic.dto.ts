@@ -49,10 +49,10 @@ export class CreateComicDto {
   coverImageUrl?: string;
 
   @ApiPropertyOptional({
-    enum: ['Superhéroes', 'Manga', 'Fantasía', 'Terror', 'Comedia'],
+    enum: ['Superheroes', 'Manga', 'Fantasy', 'Horror', 'Comedy'],
   })
   @IsOptional()
-  @IsIn(['Superhéroes', 'Manga', 'Fantasía', 'Terror', 'Comedia'], {
+  @IsIn(['Superheroes', 'Manga', 'Fantasy', 'Horror', 'Comedy'], {
     message: 'Género no válido',
   })
   genre?: string;

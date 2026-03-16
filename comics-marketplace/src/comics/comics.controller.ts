@@ -32,7 +32,7 @@ export class ComicsController {
 
   // POST /comics - Create a new comic, requires authentication (Seller)
   @Post()
-  @Roles(Role.SELLER)
+  @Roles(Role.SELLER, Role.ADMIN)
   @ApiBearerAuth()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new comic' })
