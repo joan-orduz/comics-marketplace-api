@@ -13,6 +13,8 @@ import { RolesGuard } from './auth/guards/roles.guard';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { CacheModule } from '@nestjs/cache-manager';
 import { redisStore } from 'cache-manager-ioredis-yet';
+import { BullModule } from '@nestjs/bull';
+import { PaymentsModule } from './payments/payments.module';
 
 @Module({
   imports: [
@@ -46,6 +48,17 @@ import { redisStore } from 'cache-manager-ioredis-yet';
         tls: config.get('NODE_ENV') === 'production' ? {} : undefined,
       }),
     }),
+    // BullModule: job queue, configured ONLY ONE TIME
+    BullModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        redis: {
+          host: config.get('REDIS_HOST', 'localhost'),
+          port: config.get<number>('REDIS_PORT', 6379),
+          password: config.get('REDIS_PASSWORD'),
+        },
+      }),
+    }),
     // ThrottlerModule: rate limiting, configured ONLY ONE TIME
     ThrottlerModule.forRoot([
       {
@@ -58,6 +71,7 @@ import { redisStore } from 'cache-manager-ioredis-yet';
     ComicsModule,
     UsersModule,
     AuthModule,
+    PaymentsModule,
     // TO DO: OrdersModule,
     // TO DO: PaymentsModule,
   ],
