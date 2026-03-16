@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -29,6 +30,12 @@ async function bootstrap() {
   SwaggerModule.setup('api/docs', app, document);
 
   await app.listen(3000);
+
+  // helmet is a collection of middleware functions that set various HTTP headers to help protect the app from well-known web vulnerabilities.
+  // includes: X-Content-Type-Options, X-Frame-Options,
+  //          Content-Security-Policy, HSTS, etc.
+
+  app.use(helmet());
 
 }
 bootstrap();
